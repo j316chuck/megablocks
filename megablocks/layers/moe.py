@@ -298,13 +298,13 @@ class ParallelMLP(torch.nn.Module):
 
             # TODO(tgale): It might be faster to do this on the GPU and
             # then communicate the results back to the host.
-            send_counts = repeated_tokens_per_expert.cpu().sum(dim=-1)
-            parallel_tokens_per_expert_cpu = parallel_tokens_per_expert.cpu()
+            send_counts = repeated_tokens_per_expert.sum(dim=-1)
+            parallel_tokens_per_expert_cpu = parallel_tokens_per_expert
             recv_counts = parallel_tokens_per_expert_cpu.sum(dim=-1)
 
             # Convert the send/recv counts to lists.
-            send_counts = send_counts.tolist()
-            recv_counts = recv_counts.tolist()
+            send_counts = send_counts.cpu().tolist()
+            recv_counts = recv_counts.cpu().tolist()
             tokens_received = sum(recv_counts)
 
         # If we're sharding the experts along the hidden dimension
