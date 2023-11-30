@@ -527,3 +527,30 @@ class GroupedMLP(SparseMLP):
         x = gg.ops.gmm(x, w1, batch_sizes, trans_b=True)
         x = F.gelu(x, approximate="tanh")
         return gg.ops.gmm(x, w2, batch_sizes)
+
+class TransformerEngineMLP(SparseMLP):
+    """ Implements the fp8 version of the MLP used in the Transformer Engine."""
+
+    def forward(self, x, tokens_per_expert):
+        batch_sizes = tokens_per_expert.cpu().to(torch.long)
+        w1, w2 = (self.scale_grad(self.w1), self.scale_grad(self.w2))
+
+        # Re-shape the weights for the grouped GEMMs.
+        ne = mpu.experts_per_rank(self.args)
+        w1 = w1.view(ne, -1, self.args.hidden_size)
+        w2 = w2.view(ne, -1, self.args.hidden_size)
+
+        if self.args.moe_weight_parallelism:
+            raise ValueError(
+                "Weight parallelism not yet supported with GroupedMLP.")
+
+        if self.args.memory_optimized_mlp:
+            return memory_optimized_grouped_mlp(
+                x, w1, w2, batch_sizes,
+                self.args.quantize_inputs_num_bits,
+                self.args.quantize_rematerialize_num_bits)
+
+        # Compute the MLP.
+        x = gg.ops.gmm(x, w1, batch_sizes, trans_b=True)
+        x = F.gelu(x, approximate="tanh")
+        return gg.ops.gmm(x, w2, batch_sizes)
