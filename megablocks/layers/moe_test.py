@@ -126,6 +126,7 @@ class MoETest(parameterized.TestCase):
         out, _ = moe_mlp(x)
         loss = out.sum()
         loss.backward()
+        import pdb; pdb.set_trace()
         w1_grad = moe_mlp.experts.mlp.w1.grad.detach().squeeze()
         w2_grad = moe_mlp.experts.mlp.w2.grad.detach().squeeze()
         moe_mlp.zero_grad(set_to_none=True)
