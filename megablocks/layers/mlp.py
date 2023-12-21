@@ -584,6 +584,7 @@ class TransformerEngineMLP(torch.nn.Module):
         start = 0
         out = []
         for i, size in enumerate(batch_sizes):
+            if size == 0: continue
             y = x[start:start+size, :]
             y = self.w1[i](y)
             y = self.args.activation_fn(y)
@@ -616,6 +617,7 @@ class TorchMLP(SparseMLP):
         out = []
         start = 0
         for i, size in enumerate(batch_sizes):
+            if size == 0: continue
             y = x[start:start+size, :]
             y = y @ w1[i, :, :]
             y = self.args.activation_fn(y)
