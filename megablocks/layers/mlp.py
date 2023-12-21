@@ -584,10 +584,16 @@ class TransformerEngineMLP(torch.nn.Module):
         start = 0
         out = []
         for i, size in enumerate(batch_sizes):
-            y = x[start:start+size, :]
-            y = self.w1[i](y)
-            y = self.args.activation_fn(y)
-            y = self.w2[i](y)
+            try:
+                y = x[start:start+size, :]
+                y = self.w1[i](y)
+                y = self.args.activation_fn(y)
+                y = self.w2[i](y)
+            except Exception as e:
+                print(e)
+                print("size", size)
+                print(x[start:start+size, :].shape)
+                print(x[start:start+size, :10])
             out.append(y)
             start = start + size
         return torch.cat(out)
